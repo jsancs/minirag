@@ -1,0 +1,37 @@
+[project]
+name = "minirag"
+version = "0.1.0"
+description = "A minimal RAG implementation"
+requires-python = ">=3.10"
+dependencies = [
+    "ollama==0.3.3",
+    "prompt_toolkit==3.0.48",
+    "numpy==2.1.2",
+    "langchain-text-splitters==0.3.0",
+    "psutil==6.1.0",
+    "PyMuPDF==1.24.14",
+    "tqdm==4.67.1",
+    "matplotlib==3.9.3",
+    "pandas==2.2.3",
+]
+
+[project.scripts]
+minirag = "minirag.cli:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.3",
+    "pytest-cov==6.0.0",
+    "pytest-mock==3.14.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest==8.3.3",
+    "pytest-cov==6.0.0",
+    "pytest-mock==3.14.0",
+]

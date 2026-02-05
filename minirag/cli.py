@@ -2,9 +2,9 @@ import argparse
 from typing import List, Optional
 from prompt_toolkit.shortcuts import prompt
 
-from chat import chat_streaming, add_msg_to_memory, clear_conversation
-from services.collection_service import CollectionService
-from services.rag_service import RagService
+from minirag.chat import chat_streaming, add_msg_to_memory, clear_conversation
+from minirag.services.collection_service import CollectionService
+from minirag.services.rag_service import RagService
 from minirag.utils.model_utils import handle_model
 
 
@@ -28,17 +28,17 @@ def show_help():
 def get_user_input() -> str:
     user_query = prompt(
         ">>> ",
-        placeholder='Send a message (/? for help)',
+        placeholder="Send a message (/? for help)",
     )
     return user_query
 
 
 def generate_response(
-        user_query: str,
-        model_name: str,
-        context: Optional[str] = None,
-    ) -> None:
-    model_response = "" 
+    user_query: str,
+    model_name: str,
+    context: Optional[str] = None,
+) -> None:
+    model_response = ""
 
     for chunk in chat_streaming(user_query, model_name, context):
         model_response += chunk
@@ -64,7 +64,6 @@ def get_documents() -> List[str]:
 
 
 def handle_user_query(user_query: str, model_name: str) -> None:
-
     if user_query == "/bye":
         print("Goodbye!")
         exit()
@@ -94,7 +93,9 @@ def handle_user_query(user_query: str, model_name: str) -> None:
         collection_service.create_collection(documents, collection_name)
     else:
         if collection_service.active_collection:
-            context = RagService.similarity_search(user_query, collection_service.active_collection)
+            context = RagService.similarity_search(
+                user_query, collection_service.active_collection
+            )
         else:
             context = None
         generate_response(user_query, model_name, context)
@@ -104,7 +105,7 @@ def chat_cli(model_name: str) -> None:
     while True:
         try:
             user_query = get_user_input()
-            handle_user_query(user_query, model_name)           
+            handle_user_query(user_query, model_name)
 
         except KeyboardInterrupt:
             # Ctrl-C to stop the model from responding
@@ -116,17 +117,19 @@ def chat_cli(model_name: str) -> None:
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Chat with an AI assistant.")
-    parser.add_argument("-m", "--model", type=str, default="llama3.2:1b", help="Model to use.")
+    parser.add_argument(
+        "-m", "--model", type=str, default="llama3.2:1b", help="Model to use."
+    )
     return parser.parse_args()
 
 
 def main():
     args = parse_arguments()
     model_name = args.model
-    
+
     handle_model(model_name)
     chat_cli(model_name)
-    
+
 
 if __name__ == "__main__":
     main()

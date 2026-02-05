@@ -7,3 +7,11 @@ evaluation/results/
 
 .coverage
 coverage.xml
+
+.venv/
+.uv/
+.pytest_cache/
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
