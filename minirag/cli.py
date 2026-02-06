@@ -1,5 +1,4 @@
 import argparse
-from typing import List, Optional
 from prompt_toolkit.shortcuts import prompt
 
 from minirag.chat import chat_streaming, add_msg_to_memory, clear_conversation
@@ -36,7 +35,7 @@ def get_user_input() -> str:
 def generate_response(
     user_query: str,
     model_name: str,
-    context: Optional[str] = None,
+    context: str | None = None,
 ) -> None:
     model_response = ""
 
@@ -48,7 +47,7 @@ def generate_response(
     add_msg_to_memory(user_query, model_response)
 
 
-def get_documents() -> List[str]:
+def get_documents() -> list[str]:
     doc_paths = []
     while True:
         doc_path = prompt(

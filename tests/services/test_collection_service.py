@@ -88,7 +88,7 @@ class TestCollectionService:
         test_chunk = Chunk(
             document_name="test_doc.txt",
             text="test content",
-            embedding=np.array([1.0, 2.0]),
+            embedding=[1.0, 2.0],
         )
 
         # Verify directory doesn't exist initially

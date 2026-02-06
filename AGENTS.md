@@ -33,7 +33,6 @@ python -m pytest --cov-report term --cov-report xml:coverage.xml --cov=minirag
 
 Example:
 ```python
-from typing import List, Optional
 import ollama
 import numpy as np
 from minirag.models import Chunk
@@ -54,15 +53,14 @@ from minirag.models import Chunk
 
 ### Type Hints
 - Use type annotations for all function parameters and return values
-- Use `Optional[T]` for nullable values
 - Use built-in types (List, Dict, str, int, float, etc.)
 - Use `Generator[str, None, None]` for generators
 
 Example:
 ```python
-def similarity_search(
+list[def similarity_search(
     query: str,
-    collection: List[Chunk],
+    collection: Chunk],
     top_k: int = 5,
 ) -> str:
     ...

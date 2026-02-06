@@ -35,3 +35,8 @@ dev-dependencies = [
     "pytest-cov==6.0.0",
     "pytest-mock==3.14.0",
 ]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

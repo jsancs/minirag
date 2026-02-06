@@ -1,4 +1,4 @@
-from typing import Generator, Optional
+from typing import Generator
 import ollama
 
 
@@ -8,12 +8,17 @@ CONVERSATION_HISTORY = [
 ]
 
 
-def chat_streaming(query: str, model: str, contenx: Optional[str] = None) -> Generator[str, None, None]:
-    stream = ollama.chat(
+def chat_streaming(
+    query: str, model: str, contenx: str | None = None
+) -> Generator[str, None, None]:
+    stream = ollama.chat(  # type: ignore[no-overload-argument]
         model=model,
         messages=[
             *CONVERSATION_HISTORY,
-            {"role": "user", "content": query if contenx is None else f"{contenx} {query}"},
+            {
+                "role": "user",
+                "content": query if contenx is None else f"{contenx} {query}",
+            },
         ],
         stream=True,
     )
@@ -23,10 +28,12 @@ def chat_streaming(query: str, model: str, contenx: Optional[str] = None) -> Gen
 
 
 def add_msg_to_memory(user_query: str, model_response: str) -> None:
-    CONVERSATION_HISTORY.extend([
-        {"role": "user", "content": user_query},
-        {"role": "assistant", "content": model_response},
-    ])
+    CONVERSATION_HISTORY.extend(
+        [
+            {"role": "user", "content": user_query},
+            {"role": "assistant", "content": model_response},
+        ]
+    )
 
 
 def clear_conversation() -> None:

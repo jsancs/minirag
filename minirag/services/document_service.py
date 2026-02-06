@@ -20,9 +20,9 @@ class DocumentService:
             print(f"Error reading file: {doc_path}")
             print(e)
             return ""
-        
+
         return text
-    
+
     @staticmethod
     def read_pdf_document(doc_path: str) -> str:
         try:
@@ -41,13 +41,13 @@ class DocumentService:
 
     @staticmethod
     @track_stats
-    def process_document(doc_path: str) -> List[Chunk]:
+    def process_document(doc_path: str) -> list[Chunk]:
 
-        if doc_path.lower().endswith('.pdf'):
+        if doc_path.lower().endswith(".pdf"):
             doc_text = DocumentService.read_pdf_document(doc_path)
         else:
             doc_text = DocumentService.read_document(doc_path)
-        
+
         splitter = RagService.get_splitter()
         text_chunks = splitter.split_text(doc_text)
 
