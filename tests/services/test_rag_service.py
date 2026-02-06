@@ -19,50 +19,57 @@ class TestRagService:
         assert custom_splitter._chunk_size == 500
         assert custom_splitter._chunk_overlap == 50
 
-
     def test_generate_embeddings(self, mocker):
-        # Mock ollama.embeddings
-        mock_embeddings = mocker.patch('ollama.embeddings')
-        mock_embeddings.return_value = {"embedding": [0.1, 0.2, 0.3]}
+        mock_backend = mocker.MagicMock()
+        mock_backend.generate_embeddings.return_value = [0.1, 0.2, 0.3]
+        mocker.patch(
+            "minirag.services.rag_service.get_backend_instance",
+            return_value=mock_backend,
+        )
 
-        # Test with default parameters
         text = "This is a test text"
         embeddings = RagService.generate_embeddings(text)
-        
-        # Assert embeddings are returned correctly
+
         assert isinstance(embeddings, list)
         assert len(embeddings) == 3
         assert embeddings == [0.1, 0.2, 0.3]
-        
-        # Verify ollama.embeddings was called with correct parameters
-        mock_embeddings.assert_called_once_with(
-            model="all-minilm",
-            prompt="This is a test text"
+
+        mock_backend.generate_embeddings.assert_called_once_with(
+            "This is a test text", "all-minilm"
         )
 
-        # Test with custom model
-        mock_embeddings.reset_mock()
+        mock_backend.reset_mock()
         embeddings = RagService.generate_embeddings(text, model_name="custom-model")
-        
-        # Verify ollama.embeddings was called with custom model
-        mock_embeddings.assert_called_once_with(
-            model="custom-model",
-            prompt="This is a test text"
+
+        mock_backend.generate_embeddings.assert_called_once_with(
+            "This is a test text", "custom-model"
         )
-        
 
     def test_similarity_search(self, mocker):
         # Mock generate_embeddings
         mock_generate_embeddings = mocker.patch.object(
-            RagService, 'generate_embeddings',
-            return_value=[1.0, 0.0, 0.0]  # Query embedding
+            RagService,
+            "generate_embeddings",
+            return_value=[1.0, 0.0, 0.0],  # Query embedding
         )
 
         # Create test chunks with different embeddings
         chunks = [
-            Chunk(document_name="test_doc.txt", text="First chunk", embedding=[0.8, 0.1, 0.1]),    # Similarity: 0.8
-            Chunk(document_name="test_doc.txt", text="Second chunk", embedding=[0.5, 0.5, 0.0]),   # Similarity: 0.5
-            Chunk(document_name="test_doc.txt", text="Third chunk", embedding=[0.2, 0.7, 0.1]),    # Similarity: 0.2
+            Chunk(
+                document_name="test_doc.txt",
+                text="First chunk",
+                embedding=[0.8, 0.1, 0.1],
+            ),  # Similarity: 0.8
+            Chunk(
+                document_name="test_doc.txt",
+                text="Second chunk",
+                embedding=[0.5, 0.5, 0.0],
+            ),  # Similarity: 0.5
+            Chunk(
+                document_name="test_doc.txt",
+                text="Third chunk",
+                embedding=[0.2, 0.7, 0.1],
+            ),  # Similarity: 0.2
         ]
 
         # Test similarity search with default top_k
@@ -79,4 +86,3 @@ class TestRagService:
         result_top_2 = RagService.similarity_search("test query", chunks, top_k=2)
         expected_result_top_2 = "First chunk Second chunk"
         assert result_top_2 == expected_result_top_2
-        

@@ -1,4 +1,3 @@
-from typing import List
 import fitz
 
 from minirag.models import Chunk
@@ -7,7 +6,6 @@ from minirag.utils.stats_utils import track_stats
 
 
 class DocumentService:
-
     @staticmethod
     def read_document(doc_path: str) -> str:
         try:
@@ -42,7 +40,6 @@ class DocumentService:
     @staticmethod
     @track_stats
     def process_document(doc_path: str) -> list[Chunk]:
-
         if doc_path.lower().endswith(".pdf"):
             doc_text = DocumentService.read_pdf_document(doc_path)
         else:

@@ -7,16 +7,18 @@ A tiny implementation of a RAG system that runs entirely on your computer!
 
 ## Start
 
-1. Start Ollama engine.
-2. Install dependencies with uv:
+1. Install dependencies with uv:
    ```bash
    uv sync
    ```
-3. Run `uv run minirag`. It will run a Llama3.2:1b model.
-4. Chat with the model
+2. Run the CLI:
+   - For Ollama (default): `uv run minirag`
+   - For OpenAI: `uv sync --extra openai && uv run minirag --backend openai --model gpt-4`
+3. Chat with the model
 
-There is 1 configurable param: <br>
-* `-m --model`: model to use (llama3.2:1b by default). You can check the full list of available models [here](https://ollama.com/library)
+There are 2 configurable params: <br>
+* `-m --model`: model to use (llama3.2:1b by default for Ollama). You can check the full list of available models [here](https://ollama.com/library)
+* `-b --backend`: backend to use (ollama by default). Options: ollama, openai. OpenAI backend requires the optional dependency.
 
 
 ## Usage
@@ -30,6 +32,27 @@ There is 1 configurable param: <br>
 * Type `/activate` to load and use a collection.
 * Type `/deactivate` to deactivate the active collection.
 * Type `/list` to list available collections.
+
+
+## Backends
+
+mini-local-rag supports multiple backends for AI model inference:
+
+### Ollama (default)
+- Local inference, no API keys required
+- Install: Start Ollama engine
+- Usage: `uv run minirag` or `uv run minirag --backend ollama`
+
+### OpenAI
+- Cloud-based OpenAI API (and OpenAI-compatible endpoints like vllm, openrouter)
+- Requires `OPENAI_API_KEY` environment variable
+- Optional `OPENAI_BASE_URL` for compatible endpoints (default: https://api.openai.com/v1)
+- Models are cloud-hosted and don't need to be pulled
+- Install: `uv sync --extra openai`
+- Usage: `uv run minirag --backend openai --model gpt-4`
+
+### Adding a new backend
+To add a custom backend, create a new class in `minirag/backends/` inheriting from `Backend` and implement the abstract methods. Register it in `minirag/backends/__init__.py`.
 
 
 ## Roadmap
