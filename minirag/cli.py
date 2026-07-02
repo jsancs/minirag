@@ -1,11 +1,13 @@
 import argparse
+from dotenv import load_dotenv
 from prompt_toolkit.shortcuts import prompt
 
 from minirag.chat import chat_streaming, add_msg_to_memory, clear_conversation
 from minirag.services.collection_service import CollectionService
 from minirag.services.rag_service import RagService
 from minirag.utils.model_utils import handle_model
-
+from minirag.utils.backend_manager import set_backend
+from minirag.backends import BACKENDS
 
 collection_service = CollectionService()
 
@@ -119,12 +121,24 @@ def parse_arguments():
     parser.add_argument(
         "-m", "--model", type=str, default="llama3.2:1b", help="Model to use."
     )
+    parser.add_argument(
+        "-b",
+        "--backend",
+        type=str,
+        default="ollama",
+        choices=list(BACKENDS.keys()),
+        help="Backend to use (ollama, openai).",
+    )
     return parser.parse_args()
 
 
 def main():
+    load_dotenv()
     args = parse_arguments()
     model_name = args.model
+    backend_name = args.backend
+
+    set_backend(backend_name)
 
     handle_model(model_name)
     chat_cli(model_name)

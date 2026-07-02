@@ -13,6 +13,7 @@ dependencies = [
     "tqdm==4.67.1",
     "matplotlib==3.9.3",
     "pandas==2.2.3",
+    "python-dotenv==1.0.1",
 ]
 
 [project.scripts]
@@ -23,6 +24,9 @@ dev = [
     "pytest==8.3.3",
     "pytest-cov==6.0.0",
     "pytest-mock==3.14.0",
+]
+openai = [
+    "openai>=1.0.0",
 ]
 
 [build-system]

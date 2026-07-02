@@ -2,19 +2,6 @@ import psutil
 import os
 import time
 from functools import wraps
-from typing import Callable, Any
-
-
-def get_memory_usage():
-    process = psutil.Process(os.getpid())
-    memory_info = process.memory_info()
-    return memory_info.rss / (1024 * 1024)  # in MB
-
-
-import psutil
-import os
-import time
-from functools import wraps
 from types import FunctionType
 from typing import Callable, Any, Dict, List
 

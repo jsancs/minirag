@@ -1,16 +1,16 @@
-import ollama
 import numpy as np
 from typing import Sequence
 
 from minirag.utils.stats_utils import track_stats
 from minirag.models import Chunk
+from minirag.utils.backend_manager import get_backend_instance
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 
 class RagService:
     @staticmethod
     def get_splitter(
-        chunk_size: int = 1000, chunk_overlap: int = 20
+        chunk_size: int = 500, chunk_overlap: int = 20
     ) -> RecursiveCharacterTextSplitter:
         return RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -20,13 +20,10 @@ class RagService:
     @staticmethod
     def generate_embeddings(
         src_text: str,
-        model_name: str = "all-minilm",
+        model_name: str = "",
     ) -> list[float]:
-        emb = ollama.embeddings(
-            model=model_name,
-            prompt=src_text,
-        )
-        return list(emb["embedding"])
+        backend = get_backend_instance()
+        return backend.generate_embeddings(src_text, model_name)
 
     @staticmethod
     @track_stats
