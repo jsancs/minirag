@@ -4,7 +4,6 @@ from minirag.backends.openai_backend import (
 )
 from minirag.utils.model_utils import handle_model
 from minirag.utils.backend_manager import set_backend, get_backend_instance
-from minirag.backends import get_backend
 
 
 class TestModelUtils:

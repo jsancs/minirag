@@ -2,8 +2,9 @@ import pytest
 from minirag.backends.openai_backend import (
     _openai_available as openai_available_for_tests,
 )
-from minirag.utils.backend_manager import set_backend, get_backend_instance, _backend
-from minirag.backends import get_backend, BACKENDS
+import minirag.utils.backend_manager as backend_manager
+from minirag.utils.backend_manager import set_backend, get_backend_instance
+from minirag.backends import get_backend
 from minirag.backends.base import Backend
 
 
@@ -15,8 +16,7 @@ class TestBackendManager:
         assert backend.__class__.__name__ == "OllamaBackend"
 
     def test_get_backend_instance_default(self):
-        global _backend
-        _backend = None
+        backend_manager._backend = None
         backend = get_backend_instance()
         assert isinstance(backend, Backend)
 
@@ -79,7 +79,9 @@ class TestOllamaBackend:
             return_value=iter([{"message": {"content": "hello"}}]),
         )
 
-        result = list(backend.chat_streaming("llama3.2:1b", [{"role": "user", "content": "hi"}]))
+        result = list(
+            backend.chat_streaming("llama3.2:1b", [{"role": "user", "content": "hi"}])
+        )
 
         assert result == ["hello"]
         mock_chat.assert_called_once_with(
@@ -168,7 +170,9 @@ class TestOpenAIBackend:
         from minirag.backends.openai_backend import OpenAIBackend
 
         backend = OpenAIBackend()
-        result = list(backend.chat_streaming("gpt-4.1-mini", [{"role": "user", "content": "hi"}]))
+        result = list(
+            backend.chat_streaming("gpt-4.1-mini", [{"role": "user", "content": "hi"}])
+        )
 
         assert result == ["hello"]
         mock_client.chat.completions.create.assert_called_once_with(

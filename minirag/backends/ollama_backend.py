@@ -1,5 +1,6 @@
+from typing import Any, Generator, cast
+
 import ollama
-from typing import Generator
 
 from minirag.backends.base import Backend
 
@@ -19,7 +20,8 @@ class OllamaBackend(Backend):
         model: str,
         messages: list[dict],
     ) -> Generator[str, None, None]:
-        stream = ollama.chat(  # type: ignore[no-overload-argument]
+        chat = cast(Any, ollama.chat)
+        stream = chat(
             model=model,
             messages=messages,
             options={"temperature": 0},

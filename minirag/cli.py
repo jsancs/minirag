@@ -1,5 +1,6 @@
 import argparse
 import os
+import subprocess
 
 from dotenv import load_dotenv
 from prompt_toolkit.shortcuts import prompt
@@ -36,7 +37,7 @@ def show_help() -> None:
 
 
 def clear_terminal() -> None:
-    os.system("cls" if os.name == "nt" else "clear")
+    subprocess.run("cls" if os.name == "nt" else "clear", shell=True, check=False)
 
 
 def normalize_doc_path(doc_path: str) -> str:

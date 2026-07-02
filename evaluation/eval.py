@@ -1,5 +1,4 @@
 import numpy as np
-from typing import List
 import random
 import pandas as pd
 
@@ -54,8 +53,7 @@ def evaluate_similarity_search(
         for query_idx, query in enumerate(queries):
             for run in range(runs):
                 print(
-                    f"Running query {query_idx + 1}/{num_queries}, "
-                    f"run {run + 1}/{runs}"
+                    f"Running query {query_idx + 1}/{num_queries}, run {run + 1}/{runs}"
                 )
 
                 # Perform similarity search

@@ -38,6 +38,8 @@ dev-dependencies = [
     "pytest==8.3.3",
     "pytest-cov==6.0.0",
     "pytest-mock==3.14.0",
+    "ruff>=0.15.20",
+    "ty>=0.0.56",
 ]
 
 [tool.pytest.ini_options]

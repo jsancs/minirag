@@ -2,8 +2,6 @@ import pytest
 from pathlib import Path
 import shutil
 import tempfile
-import os
-import numpy as np
 from unittest.mock import patch
 
 from minirag.services.collection_service import CollectionService

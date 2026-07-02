@@ -1,4 +1,3 @@
-import pytest
 from minirag.services.rag_service import RagService
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 

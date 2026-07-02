@@ -1,5 +1,7 @@
 import os
-from typing import Generator
+from typing import Any, Generator
+
+from minirag.backends.base import Backend
 
 _openai_available = False
 try:
@@ -7,6 +9,7 @@ try:
 
     _openai_available = True
 except ImportError:
+
     class OpenAI:
         def __init__(self, *args, **kwargs) -> None:
             raise ImportError("openai package is not installed.")
@@ -33,11 +36,9 @@ except ImportError:
         def retrieve(self, *args, **kwargs) -> None:
             raise ImportError("openai package is not installed.")
 
-from minirag.backends.base import Backend
-
 
 class OpenAIBackend(Backend):
-    def __init__(self):
+    def __init__(self) -> None:
         if not _openai_available:
             raise ImportError(
                 "OpenAI backend is not available. Please install it with `uv sync --extra openai`."
@@ -50,7 +51,7 @@ class OpenAIBackend(Backend):
         base_url = os.getenv("OPENAI_BASE_URL")
         if not base_url:
             base_url = "https://api.openai.com/v1"
-        self.client = OpenAI(api_key=api_key, base_url=base_url)
+        self.client: Any = OpenAI(api_key=api_key, base_url=base_url)
 
     def generate_embeddings(
         self, text: str, model_name: str = "text-embedding-3-small"
@@ -66,7 +67,7 @@ class OpenAIBackend(Backend):
         model: str,
         messages: list[dict],
     ) -> Generator[str, None, None]:
-        stream = self.client.chat.completions.create(  # type: ignore[no-overload-argument]
+        stream = self.client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=0,
@@ -86,7 +87,7 @@ class OpenAIBackend(Backend):
 
     def pull_model(self, model_name: str) -> None:
         print(
-            f"OpenAI models do not support pulling. Please ensure the model name is correct."
+            "OpenAI models do not support pulling. Please ensure the model name is correct."
         )
         raise ValueError(
             "OpenAI models do not support pulling. Please ensure the model name is correct."

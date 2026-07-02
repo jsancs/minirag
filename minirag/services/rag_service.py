@@ -1,5 +1,4 @@
 import numpy as np
-from typing import Sequence
 
 from minirag.utils.stats_utils import track_stats
 from minirag.models import Chunk
