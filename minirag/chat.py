@@ -79,7 +79,6 @@ def add_msg_to_memory(user_query: str, model_response: str) -> None:
 
 
 def clear_conversation() -> None:
-    print("Clearing conversation history...")
     global CONVERSATION_HISTORY
     CONVERSATION_HISTORY = [
         {"role": "system", "content": SYS_PROMPT},

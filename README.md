@@ -13,25 +13,27 @@ A tiny implementation of a RAG system that runs entirely on your computer!
    ```
 2. Run the CLI:
    - For Ollama (default): `uv run minirag`
-   - For OpenAI: `uv sync --extra openai && uv run minirag --backend openai --model gpt-4`
+   - For OpenAI: `uv sync --extra openai && uv run minirag --backend openai --model <model>`
 3. Chat with the model
 
 There are 2 configurable params: <br>
-* `-m --model`: model to use (llama3.2:1b by default for Ollama). You can check the full list of available models [here](https://ollama.com/library)
+* `-m --model`: model to use (`llama3.1:8b` by default for Ollama). You can check the full list of available models [here](https://ollama.com/library)
 * `-b --backend`: backend to use (ollama by default). Options: ollama, openai. OpenAI backend requires the optional dependency.
 
 
 ## Usage
 * Type a message to chat with the model. All the conversation will be remembered by the model.
-* Type `/bye` to exit the chat.
-* Type `/help` to show all the commands.
 * Type `/add` to create a collection.
     * You'll be asked to enter the paths for all the documents for the collection. You can enter specific files or directories, in which case it will process all the files within the directory.
     * You will be asked to introduce a collection name.
     * Then the embeddings will be generated and stored in a .npy file for future reference. The embeddings will be stored in memory with numpy.
-* Type `/activate` to load and use a collection.
+* Type `/activate <collection_name>` to load and use a collection.
 * Type `/deactivate` to deactivate the active collection.
 * Type `/list` to list available collections.
+* Type `/status` to check whether a collection is active.
+* Type `/clear` to clear the conversation history and the terminal.
+* Type `/help` or `/?` to show all the commands.
+* Type `/bye`, `/exit`, or `Ctrl-D` to exit the chat.
 
 
 ## Backends
@@ -44,12 +46,12 @@ mini-local-rag supports multiple backends for AI model inference:
 - Usage: `uv run minirag` or `uv run minirag --backend ollama`
 
 ### OpenAI
-- Cloud-based OpenAI API (and OpenAI-compatible endpoints like vllm, openrouter)
+- Cloud-based OpenAI API and OpenAI-compatible endpoints
 - Requires `OPENAI_API_KEY` environment variable
 - Optional `OPENAI_BASE_URL` for compatible endpoints (default: https://api.openai.com/v1)
 - Models are cloud-hosted and don't need to be pulled
 - Install: `uv sync --extra openai`
-- Usage: `uv run minirag --backend openai --model gpt-4`
+- Usage: `uv run minirag --backend openai --model <model>`
 
 ### Adding a new backend
 To add a custom backend, create a new class in `minirag/backends/` inheriting from `Backend` and implement the abstract methods. Register it in `minirag/backends/__init__.py`.

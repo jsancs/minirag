@@ -1,4 +1,5 @@
 import argparse
+import os
 
 from dotenv import load_dotenv
 from prompt_toolkit.shortcuts import prompt
@@ -18,18 +19,31 @@ from minirag.backends import BACKENDS
 collection_service = CollectionService()
 
 
-def show_help():
-    print("Commands:")
-    print("/clear - Clear the chat history and starts a new conversation")
-    print("/add - Add document to the model's memory")
-    print("/activate <collection_name> - Activate a collection")
-    print("/deactivate - Deactivate the active collection")
-    print("/list - List available collections")
-    print("/help - Show this help message")
-    print("/bye - Exit the chat")
-    print("ctrl + c - Stop the model from responding")
-    print("ctrl + d - Exit the chat")
+def show_help() -> None:
+    print("MiniRAG commands:")
+    print("  /add                         Create a collection from files or folders.")
+    print("  /activate <collection_name>  Load a collection for RAG answers.")
+    print("  /deactivate                  Unload the active collection.")
+    print("  /list                        Show saved collections.")
+    print("  /status                      Show the active collection state.")
+    print("  /clear                       Clear conversation history and the terminal.")
+    print("  /help, /?                    Show this help message.")
+    print("  /bye, /exit, Ctrl-D          Exit the chat.")
     print()
+    print("Shortcuts:")
+    print("  Ctrl-C                       Stop the current response.")
+    print()
+
+
+def clear_terminal() -> None:
+    os.system("cls" if os.name == "nt" else "clear")
+
+
+def normalize_doc_path(doc_path: str) -> str:
+    doc_path = doc_path.strip()
+    if len(doc_path) >= 2 and doc_path[0] == doc_path[-1] and doc_path[0] in ("'", '"'):
+        return doc_path[1:-1]
+    return doc_path
 
 
 def get_user_input() -> str:
@@ -59,30 +73,52 @@ def get_documents() -> list[str]:
     doc_paths = []
     while True:
         doc_path = prompt(
-            "Local path to document document (file or dir) (/done to finish): ",
+            "Local path to document (file or dir) (/done to finish): ",
         )
         if doc_path == "/done":
             break
 
         if doc_path:
-            doc_paths.append(doc_path)
+            doc_paths.append(normalize_doc_path(doc_path))
 
     return doc_paths
 
 
+def show_status() -> None:
+    if collection_service.active_collection:
+        chunk_count = len(collection_service.active_collection)
+        print(f"Collection active ({chunk_count} chunks).")
+    else:
+        print("No collection active.")
+
+
 def handle_user_query(user_query: str, model_name: str) -> None:
-    if user_query == "/bye":
+    user_query = user_query.strip()
+
+    if not user_query:
+        return
+
+    if user_query in ("/bye", "/exit"):
         print("Goodbye!")
         exit()
     elif user_query == "/clear":
         clear_conversation()
+        clear_terminal()
+        print("Conversation cleared.")
     elif user_query == "/help" or user_query == "/?":
         show_help()
     elif user_query.startswith("/activate"):
-        collection_name = user_query.split(" ")[1]
+        command_parts = user_query.split(maxsplit=1)
+        if len(command_parts) == 1:
+            print("Usage: /activate <collection_name>")
+            return
+
+        collection_name = command_parts[1]
         collection_service.load_collection(collection_name)
     elif user_query == "/list":
         collection_service.list_collections()
+    elif user_query == "/status":
+        show_status()
     elif user_query == "/deactivate":
         print("Collection deactivated.")
         collection_service.active_collection = None
@@ -98,6 +134,9 @@ def handle_user_query(user_query: str, model_name: str) -> None:
         print(f"Docs selected: {documents}")
 
         collection_service.create_collection(documents, collection_name)
+    elif user_query.startswith("/"):
+        print(f"Unknown command: {user_query}")
+        print("Use /help to see available commands.")
     else:
         if collection_service.active_collection:
             retrieval_query = build_retrieval_query(user_query)
@@ -126,7 +165,7 @@ def chat_cli(model_name: str) -> None:
             break
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Chat with an AI assistant.")
     parser.add_argument(
         "-m", "--model", type=str, default="llama3.1:8b", help="Model to use."
