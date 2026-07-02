@@ -36,8 +36,12 @@ def test_process_document_empty_file():
 
 def test_process_document_adds_chunk_metadata():
     with (
-        patch.object(DocumentService, "read_document_pages", return_value=[(None, "content")]),
-        patch("minirag.services.document_service.RagService.generate_embeddings") as embeddings,
+        patch.object(
+            DocumentService, "read_document_pages", return_value=[(None, "content")]
+        ),
+        patch(
+            "minirag.services.document_service.RagService.generate_embeddings"
+        ) as embeddings,
     ):
         embeddings.return_value = [0.1, 0.2, 0.3]
 

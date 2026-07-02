@@ -1,4 +1,5 @@
 import minirag.chat as chat
+from minirag.models import ChatSession, SYS_PROMPT
 
 
 class TestChat:
@@ -22,8 +23,11 @@ class TestChat:
         mock_backend = mocker.MagicMock()
         mock_backend.chat_streaming.return_value = iter(["MPT"])
         mocker.patch("minirag.chat.get_backend_instance", return_value=mock_backend)
+        session = ChatSession()
 
-        result = list(chat.chat_streaming("What team?", "llama3.2:1b", "CLUB: MPT"))
+        result = list(
+            chat.chat_streaming("What team?", "llama3.2:1b", "CLUB: MPT", session)
+        )
 
         assert result == ["MPT"]
         mock_backend.chat_streaming.assert_called_once()
@@ -47,25 +51,37 @@ class TestChat:
         }
 
     def test_clear_conversation_keeps_system_prompt(self):
-        chat.CONVERSATION_HISTORY.append({"role": "user", "content": "hello"})
+        session = ChatSession()
+        session.messages.append({"role": "user", "content": "hello"})
 
-        chat.clear_conversation()
+        chat.clear_conversation(session)
 
-        assert chat.CONVERSATION_HISTORY == [
-            {"role": "system", "content": chat.SYS_PROMPT},
+        assert session.messages == [
+            {"role": "system", "content": SYS_PROMPT},
         ]
 
     def test_build_retrieval_query_includes_recent_user_messages(self):
-        chat.clear_conversation()
-        chat.add_msg_to_memory("a qué equipo pertenece el corredor?", "MPT")
+        session = ChatSession()
+        chat.add_msg_to_memory(session, "a qué equipo pertenece el corredor?", "MPT")
 
-        result = chat.build_retrieval_query("qué carrera es esta?")
+        result = chat.build_retrieval_query("qué carrera es esta?", session)
 
         assert result == "a qué equipo pertenece el corredor?\nqué carrera es esta?"
 
     def test_build_retrieval_query_without_history_returns_query(self):
-        chat.clear_conversation()
+        session = ChatSession()
 
-        result = chat.build_retrieval_query("qué carrera es esta?")
+        result = chat.build_retrieval_query("qué carrera es esta?", session)
 
         assert result == "qué carrera es esta?"
+
+    def test_build_retrieval_query_ignores_assistant_messages(self):
+        session = ChatSession()
+        chat.add_msg_to_memory(session, "a qué equipo pertenece el corredor?", "MPT")
+        session.messages.append(
+            {"role": "assistant", "content": "CLUB ASTORGA RUNNING"}
+        )
+
+        result = chat.build_retrieval_query("y qué carrera es?", session)
+
+        assert result == "a qué equipo pertenece el corredor?\ny qué carrera es?"

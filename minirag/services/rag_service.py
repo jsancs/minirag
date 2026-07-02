@@ -48,7 +48,9 @@ class RagService:
         query_emb = RagService.generate_embeddings(query)
         scored_records = []
         for index, record in enumerate(collection):
-            record.similarity = RagService.cosine_similarity(record.embedding, query_emb)
+            record.similarity = RagService.cosine_similarity(
+                record.embedding, query_emb
+            )
             scored_records.append((index, record))
 
         top_records = sorted(

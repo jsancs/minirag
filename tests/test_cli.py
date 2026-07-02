@@ -2,6 +2,9 @@ import minirag.cli as cli
 
 
 class TestCli:
+    def session(self):
+        return cli.ChatSession()
+
     def test_show_help_lists_core_commands(self, capsys):
         cli.show_help()
 
@@ -23,23 +26,24 @@ class TestCli:
     def test_clear_command_clears_conversation_and_terminal(self, mocker, capsys):
         clear_conversation = mocker.patch("minirag.cli.clear_conversation")
         clear_terminal = mocker.patch("minirag.cli.clear_terminal")
+        session = self.session()
 
-        cli.handle_user_query("/clear", "llama3.1:8b")
+        cli.handle_user_query("/clear", "llama3.1:8b", session)
 
-        clear_conversation.assert_called_once_with()
+        clear_conversation.assert_called_once_with(session)
         clear_terminal.assert_called_once_with()
         captured = capsys.readouterr()
         assert "Conversation cleared." in captured.out
 
     def test_activate_without_collection_name_prints_usage(self, capsys):
-        cli.handle_user_query("/activate", "llama3.1:8b")
+        cli.handle_user_query("/activate", "llama3.1:8b", self.session())
 
         captured = capsys.readouterr()
 
         assert "Usage: /activate <collection_name>" in captured.out
 
     def test_unknown_slash_command_prints_help_hint(self, capsys):
-        cli.handle_user_query("/wat", "llama3.1:8b")
+        cli.handle_user_query("/wat", "llama3.1:8b", self.session())
 
         captured = capsys.readouterr()
 
@@ -49,12 +53,12 @@ class TestCli:
     def test_empty_input_is_ignored(self, mocker):
         generate_response = mocker.patch("minirag.cli.generate_response")
 
-        cli.handle_user_query("   ", "llama3.1:8b")
+        cli.handle_user_query("   ", "llama3.1:8b", self.session())
 
         generate_response.assert_not_called()
 
     def test_retrieve_without_query_prints_usage(self, capsys):
-        cli.handle_user_query("/retrieve", "llama3.1:8b")
+        cli.handle_user_query("/retrieve", "llama3.1:8b", self.session())
 
         captured = capsys.readouterr()
 
@@ -64,10 +68,13 @@ class TestCli:
         retrieve_chunks = mocker.patch("minirag.cli.retrieve_chunks_for_query")
         show_retrieved_chunks = mocker.patch("minirag.cli.show_retrieved_chunks")
         retrieve_chunks.return_value = []
+        session = self.session()
 
-        cli.handle_user_query("/retrieve test question", "llama3.1:8b", top_k=3)
+        cli.handle_user_query(
+            "/retrieve test question", "llama3.1:8b", session, top_k=3
+        )
 
-        retrieve_chunks.assert_called_once_with("test question", 3)
+        retrieve_chunks.assert_called_once_with("test question", session, 3)
         show_retrieved_chunks.assert_called_once_with([])
 
     def test_parse_arguments_accepts_top_k(self, monkeypatch):

@@ -12,7 +12,7 @@ from minirag.chat import (
     chat_streaming,
     clear_conversation,
 )
-from minirag.models import Chunk
+from minirag.models import ChatSession, Chunk
 from minirag.services.collection_service import CollectionService
 from minirag.services.rag_service import RagService
 from minirag.utils.model_utils import handle_model
@@ -28,7 +28,9 @@ def show_help() -> None:
     print("  /add                         Create a collection from files or folders.")
     print("  /activate <collection_name>  Load a collection for RAG answers.")
     print("  /deactivate                  Unload the active collection.")
-    print("  /retrieve <query>            Show retrieved chunks without asking the model.")
+    print(
+        "  /retrieve <query>            Show retrieved chunks without asking the model."
+    )
     print("  /list                        Show saved collections.")
     print("  /status                      Show the active collection state.")
     print("  /clear                       Clear conversation history and the terminal.")
@@ -65,16 +67,17 @@ def get_user_input() -> str:
 def generate_response(
     user_query: str,
     model_name: str,
+    session: ChatSession,
     context: str | None = None,
 ) -> None:
     model_response = ""
 
-    for chunk in chat_streaming(user_query, model_name, context):
+    for chunk in chat_streaming(user_query, model_name, context, session):
         model_response += chunk
         print(chunk, end="", flush=True)
     print()
 
-    add_msg_to_memory(user_query, model_response)
+    add_msg_to_memory(session, user_query, model_response)
 
 
 def chunks_to_context(chunks: list[Chunk]) -> str:
@@ -130,13 +133,14 @@ def show_status() -> None:
 
 def retrieve_chunks_for_query(
     user_query: str,
+    session: ChatSession,
     top_k: int = DEFAULT_TOP_K,
 ) -> list[Chunk]:
     if not collection_service.active_collection:
         print("No collection active. Use /activate <collection_name> first.")
         return []
 
-    retrieval_query = build_retrieval_query(user_query)
+    retrieval_query = build_retrieval_query(user_query, session)
     return RagService.retrieve_chunks(
         retrieval_query,
         collection_service.active_collection,
@@ -147,6 +151,7 @@ def retrieve_chunks_for_query(
 def handle_user_query(
     user_query: str,
     model_name: str,
+    session: ChatSession,
     top_k: int = DEFAULT_TOP_K,
 ) -> None:
     user_query = user_query.strip()
@@ -158,7 +163,7 @@ def handle_user_query(
         print("Goodbye!")
         exit()
     elif user_query == "/clear":
-        clear_conversation()
+        clear_conversation(session)
         clear_terminal()
         print("Conversation cleared.")
     elif user_query == "/help" or user_query == "/?":
@@ -184,7 +189,7 @@ def handle_user_query(
             print("Usage: /retrieve <query>")
             return
 
-        retrieved_chunks = retrieve_chunks_for_query(command_parts[1], top_k)
+        retrieved_chunks = retrieve_chunks_for_query(command_parts[1], session, top_k)
         show_retrieved_chunks(retrieved_chunks)
     elif user_query == "/add":
         collection_name = ""
@@ -203,19 +208,20 @@ def handle_user_query(
         print("Use /help to see available commands.")
     else:
         if collection_service.active_collection:
-            retrieved_chunks = retrieve_chunks_for_query(user_query, top_k)
+            retrieved_chunks = retrieve_chunks_for_query(user_query, session, top_k)
             context = chunks_to_context(retrieved_chunks)
         else:
             context = None
 
-        generate_response(user_query, model_name, context)
+        generate_response(user_query, model_name, session, context)
 
 
 def chat_cli(model_name: str, top_k: int = DEFAULT_TOP_K) -> None:
+    session = ChatSession()
     while True:
         try:
             user_query = get_user_input()
-            handle_user_query(user_query, model_name, top_k)
+            handle_user_query(user_query, model_name, session, top_k)
 
         except KeyboardInterrupt:
             # Ctrl-C to stop the model from responding
