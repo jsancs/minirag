@@ -72,6 +72,23 @@ class TestOllamaBackend:
         result = backend.check_model_exists("unknown")
         assert result is False
 
+    def test_chat_streaming_uses_deterministic_temperature(self, mocker):
+        backend = get_backend("ollama")
+        mock_chat = mocker.patch(
+            "ollama.chat",
+            return_value=iter([{"message": {"content": "hello"}}]),
+        )
+
+        result = list(backend.chat_streaming("llama3.2:1b", [{"role": "user", "content": "hi"}]))
+
+        assert result == ["hello"]
+        mock_chat.assert_called_once_with(
+            model="llama3.2:1b",
+            messages=[{"role": "user", "content": "hi"}],
+            options={"temperature": 0},
+            stream=True,
+        )
+
 
 @pytest.mark.skipif(
     not openai_available_for_tests,
@@ -137,6 +154,28 @@ class TestOpenAIBackend:
         mock_client.embeddings.create.assert_called_once_with(
             model="text-embedding-3-small",
             input="test text",
+        )
+
+    def test_chat_streaming_uses_deterministic_temperature(self, mocker, monkeypatch):
+        mock_client = mocker.MagicMock()
+        mock_chunk = mocker.MagicMock()
+        mock_chunk.choices[0].delta.content = "hello"
+        mock_client.chat.completions.create.return_value = iter([mock_chunk])
+
+        mocker.patch("minirag.backends.openai_backend.OpenAI", return_value=mock_client)
+        monkeypatch.setenv("OPENAI_API_KEY", "test_key")
+
+        from minirag.backends.openai_backend import OpenAIBackend
+
+        backend = OpenAIBackend()
+        result = list(backend.chat_streaming("gpt-4.1-mini", [{"role": "user", "content": "hi"}]))
+
+        assert result == ["hello"]
+        mock_client.chat.completions.create.assert_called_once_with(
+            model="gpt-4.1-mini",
+            messages=[{"role": "user", "content": "hi"}],
+            temperature=0,
+            stream=True,
         )
 
     def test_check_model_exists(self, mocker, monkeypatch):

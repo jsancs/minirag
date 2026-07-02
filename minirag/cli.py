@@ -1,8 +1,14 @@
 import argparse
+
 from dotenv import load_dotenv
 from prompt_toolkit.shortcuts import prompt
 
-from minirag.chat import chat_streaming, add_msg_to_memory, clear_conversation
+from minirag.chat import (
+    add_msg_to_memory,
+    build_retrieval_query,
+    chat_streaming,
+    clear_conversation,
+)
 from minirag.services.collection_service import CollectionService
 from minirag.services.rag_service import RagService
 from minirag.utils.model_utils import handle_model
@@ -94,11 +100,15 @@ def handle_user_query(user_query: str, model_name: str) -> None:
         collection_service.create_collection(documents, collection_name)
     else:
         if collection_service.active_collection:
+            retrieval_query = build_retrieval_query(user_query)
             context = RagService.similarity_search(
-                user_query, collection_service.active_collection
+                retrieval_query,
+                collection_service.active_collection,
+                top_k=5,
             )
         else:
             context = None
+
         generate_response(user_query, model_name, context)
 
 
@@ -119,7 +129,7 @@ def chat_cli(model_name: str) -> None:
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Chat with an AI assistant.")
     parser.add_argument(
-        "-m", "--model", type=str, default="llama3.2:1b", help="Model to use."
+        "-m", "--model", type=str, default="llama3.1:8b", help="Model to use."
     )
     parser.add_argument(
         "-b",

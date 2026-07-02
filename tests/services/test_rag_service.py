@@ -79,10 +79,25 @@ class TestRagService:
         mock_generate_embeddings.assert_called_once_with("test query")
 
         # Check if results are ordered by similarity and concatenated correctly
-        expected_result = "First chunk Second chunk Third chunk"
+        expected_result = "First chunk\n\nSecond chunk\n\nThird chunk"
         assert result == expected_result
 
         # Test with custom top_k
         result_top_2 = RagService.similarity_search("test query", chunks, top_k=2)
-        expected_result_top_2 = "First chunk Second chunk"
+        expected_result_top_2 = "First chunk\n\nSecond chunk"
         assert result_top_2 == expected_result_top_2
+
+    def test_similarity_search_does_not_reorder_collection(self, mocker):
+        mocker.patch.object(
+            RagService,
+            "generate_embeddings",
+            return_value=[1.0, 0.0, 0.0],
+        )
+        chunks = [
+            Chunk("test_doc.txt", "First chunk", [0.2, 0.7, 0.1]),
+            Chunk("test_doc.txt", "Second chunk", [0.8, 0.1, 0.1]),
+        ]
+
+        RagService.similarity_search("test query", chunks, top_k=1)
+
+        assert [chunk.text for chunk in chunks] == ["First chunk", "Second chunk"]

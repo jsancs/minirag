@@ -22,6 +22,7 @@ class OllamaBackend(Backend):
         stream = ollama.chat(  # type: ignore[no-overload-argument]
             model=model,
             messages=messages,
+            options={"temperature": 0},
             stream=True,
         )
 

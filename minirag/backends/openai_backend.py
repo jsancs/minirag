@@ -69,6 +69,7 @@ class OpenAIBackend(Backend):
         stream = self.client.chat.completions.create(  # type: ignore[no-overload-argument]
             model=model,
             messages=messages,
+            temperature=0,
             stream=True,
         )
 

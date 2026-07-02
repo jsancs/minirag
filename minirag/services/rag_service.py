@@ -33,7 +33,16 @@ class RagService:
         top_k: int = 5,
     ) -> str:
         query_emb = RagService.generate_embeddings(query)
-        for record in collection:
+        scored_records = []
+        for index, record in enumerate(collection):
             record.similarity = np.dot(record.embedding, query_emb)
-        collection.sort(key=lambda x: x.similarity, reverse=True)
-        return " ".join([record.text for record in collection[:top_k]])
+            scored_records.append((index, record))
+
+        top_records = sorted(
+            scored_records,
+            key=lambda item: item[1].similarity,
+            reverse=True,
+        )[:top_k]
+        top_records.sort(key=lambda item: item[0])
+
+        return "\n\n".join([record.text for _, record in top_records])
