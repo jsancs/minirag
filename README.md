@@ -17,7 +17,7 @@ A tiny implementation of a RAG system that runs entirely on your computer!
 3. Chat with the model
 
 There are 2 configurable params: <br>
-* `-m --model`: model to use (`llama3.1:8b` by default for Ollama). You can check the full list of available models [here](https://ollama.com/library)
+* `-m --model`: model to use (`llama3.1:8b` by default for Ollama). You can check the full list of available models [here](https://ollama.com/library).
 * `-b --backend`: backend to use (ollama by default). Options: ollama, openai. OpenAI backend requires the optional dependency.
 
 
@@ -65,17 +65,19 @@ These are the next steps I plan to take:
 - [X] Testing
 - [ ] Improve index algorithm
 - [ ] Performance metrics (speed, storage, scalability, ...)
-- [ ] UI (somthing very light and simple)
+- [ ] UI (something very light and simple)
 
 ## Project Setup
 
 This project uses uv for dependency management. The project configuration is in `pyproject.toml`:
 
 - Core dependencies are listed under `[project.dependencies]`
-- Development dependencies are listed under `[tool.uv.dev-dependencies]`
+- Development dependencies are listed under `[tool.uv]`
 - To install dependencies, run `uv sync`
 - To run the CLI, use `uv run minirag` or `uv run minirag --model <model_name>`
-- To run tests, use `uv run pytest tests`
+- To run tests, use `uv run python -m pytest tests`
+- To run linting, use `uv run ruff check .`
+- To run type checks, use `uv run ty check .`
 
 Feel free to suggest any other relevant topic or idea to be included in the code (contributions are also welcome)
 
@@ -90,14 +92,22 @@ Feel free to suggest any other relevant topic or idea to be included in the code
 Testing has been done with pytest.
 
 To run all the tests:
-`uv run pytest tests`
+`uv run python -m pytest tests`
 
 To generate coverage report:
-`uv run pytest --cov-report term --cov-report xml:coverage.xml --cov=minirag`
+`uv run python -m pytest --cov-report term --cov-report xml:coverage.xml --cov=minirag`
+
+To run the full local validation sequence:
+
+```bash
+uv run ruff check .
+uv run ty check .
+uv run python -m pytest tests
+```
 
 
 ## Evaluation (in progress)
-The `evaluation/` folder contains scripts and data used for evaluate the performance of this rag system.
+The `evaluation/` folder contains scripts and data used to evaluate the performance of this RAG system.
 The supported metrics right now are the following:
 
 ### Similarity search speed
