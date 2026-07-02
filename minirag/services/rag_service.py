@@ -10,7 +10,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 class RagService:
     @staticmethod
     def get_splitter(
-        chunk_size: int = 1000, chunk_overlap: int = 20
+        chunk_size: int = 500, chunk_overlap: int = 20
     ) -> RecursiveCharacterTextSplitter:
         return RecursiveCharacterTextSplitter(
             chunk_size=chunk_size,
@@ -20,7 +20,7 @@ class RagService:
     @staticmethod
     def generate_embeddings(
         src_text: str,
-        model_name: str = "all-minilm",
+        model_name: str = "",
     ) -> list[float]:
         backend = get_backend_instance()
         return backend.generate_embeddings(src_text, model_name)

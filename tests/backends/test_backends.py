@@ -1,4 +1,7 @@
 import pytest
+from minirag.backends.openai_backend import (
+    _openai_available as openai_available_for_tests,
+)
 from minirag.utils.backend_manager import set_backend, get_backend_instance, _backend
 from minirag.backends import get_backend, BACKENDS
 from minirag.backends.base import Backend
@@ -32,12 +35,28 @@ class TestBackendRegistry:
 class TestOllamaBackend:
     def test_generate_embeddings(self, mocker):
         backend = get_backend("ollama")
-        mocker.patch("ollama.embeddings", return_value={"embedding": [0.1, 0.2]})
+        mock_embeddings = mocker.patch(
+            "ollama.embeddings", return_value={"embedding": [0.1, 0.2]}
+        )
 
         result = backend.generate_embeddings("test text")
         assert isinstance(result, list)
         assert len(result) == 2
         assert result == [0.1, 0.2]
+        mock_embeddings.assert_called_once_with(
+            model="all-minilm",
+            prompt="test text",
+        )
+
+    def test_generate_embeddings_defaults_model(self, mocker):
+        backend = get_backend("ollama")
+        mock_embeddings = mocker.patch(
+            "ollama.embeddings", return_value={"embedding": [0.1, 0.2]}
+        )
+
+        backend.generate_embeddings("test text", "")
+
+        mock_embeddings.assert_called_once_with(model="all-minilm", prompt="test text")
 
     def test_check_model_exists(self, mocker):
         backend = get_backend("ollama")
@@ -54,6 +73,10 @@ class TestOllamaBackend:
         assert result is False
 
 
+@pytest.mark.skipif(
+    not openai_available_for_tests,
+    reason="OpenAI backend is not available (openai package not installed)",
+)
 class TestOpenAIBackend:
     def test_init_missing_api_key(self, monkeypatch):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
@@ -111,6 +134,10 @@ class TestOpenAIBackend:
         backend = OpenAIBackend()
         result = backend.generate_embeddings("test text")
         assert result == [0.1, 0.2]
+        mock_client.embeddings.create.assert_called_once_with(
+            model="text-embedding-3-small",
+            input="test text",
+        )
 
     def test_check_model_exists(self, mocker, monkeypatch):
         mock_client = mocker.MagicMock()

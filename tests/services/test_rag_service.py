@@ -10,7 +10,7 @@ class TestRagService:
         # Test with default parameters
         splitter = RagService.get_splitter()
         assert isinstance(splitter, RecursiveCharacterTextSplitter)
-        assert splitter._chunk_size == 1000
+        assert splitter._chunk_size == 500
         assert splitter._chunk_overlap == 20
 
         # Test with custom parameters
@@ -35,7 +35,7 @@ class TestRagService:
         assert embeddings == [0.1, 0.2, 0.3]
 
         mock_backend.generate_embeddings.assert_called_once_with(
-            "This is a test text", "all-minilm"
+            "This is a test text", ""
         )
 
         mock_backend.reset_mock()

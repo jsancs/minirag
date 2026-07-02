@@ -9,7 +9,7 @@ class OllamaBackend(Backend):
         self, text: str, model_name: str = "all-minilm"
     ) -> list[float]:
         emb = ollama.embeddings(
-            model=model_name,
+            model=model_name or "all-minilm",
             prompt=text,
         )
         return list(emb["embedding"])

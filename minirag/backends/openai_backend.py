@@ -1,18 +1,47 @@
-from typing import Generator
 import os
+from typing import Generator
 
+_openai_available = False
 try:
     from openai import OpenAI
+
+    _openai_available = True
 except ImportError:
-    raise ImportError(
-        "openai package is required for OpenAI backend. Install it with: uv sync --extra openai"
-    )
+    class OpenAI:
+        def __init__(self, *args, **kwargs) -> None:
+            raise ImportError("openai package is not installed.")
+
+        @property
+        def embeddings(self) -> "OpenAI":
+            return self
+
+        @property
+        def chat(self) -> "OpenAI":
+            return self
+
+        @property
+        def completions(self) -> "OpenAI":
+            return self
+
+        def create(self, *args, **kwargs) -> None:
+            raise ImportError("openai package is not installed.")
+
+        @property
+        def models(self) -> "OpenAI":
+            return self
+
+        def retrieve(self, *args, **kwargs) -> None:
+            raise ImportError("openai package is not installed.")
 
 from minirag.backends.base import Backend
 
 
 class OpenAIBackend(Backend):
     def __init__(self):
+        if not _openai_available:
+            raise ImportError(
+                "OpenAI backend is not available. Please install it with `uv sync --extra openai`."
+            )
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
             raise ValueError(
@@ -27,7 +56,7 @@ class OpenAIBackend(Backend):
         self, text: str, model_name: str = "text-embedding-3-small"
     ) -> list[float]:
         response = self.client.embeddings.create(
-            model=model_name,
+            model=model_name or "text-embedding-3-small",
             input=text,
         )
         return response.data[0].embedding

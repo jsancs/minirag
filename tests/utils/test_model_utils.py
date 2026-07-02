@@ -1,3 +1,7 @@
+import pytest
+from minirag.backends.openai_backend import (
+    _openai_available as openai_available_for_tests,
+)
 from minirag.utils.model_utils import handle_model
 from minirag.utils.backend_manager import set_backend, get_backend_instance
 from minirag.backends import get_backend
@@ -22,6 +26,10 @@ class TestModelUtils:
         handle_model("existing_model")
         mock_pull.assert_not_called()
 
+    @pytest.mark.skipif(
+        not openai_available_for_tests,
+        reason="OpenAI backend is not available (openai package not installed)",
+    )
     def test_handle_model_openai_missing(self, mocker, capsys, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "test_key")
         set_backend("openai")
