@@ -29,6 +29,7 @@ There are 2 configurable params: <br>
     * Then the embeddings will be generated and stored in a .npy file for future reference. The embeddings will be stored in memory with numpy.
 * Type `/activate <collection_name>` to load and use a collection.
 * Type `/deactivate` to deactivate the active collection.
+* Type `/retrieve <query>` to show the chunks that would be used as RAG context without asking the model.
 * Type `/list` to list available collections.
 * Type `/status` to check whether a collection is active.
 * Type `/clear` to clear the conversation history and the terminal.

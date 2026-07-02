@@ -55,11 +55,26 @@ class CollectionService:
         self._store_embeddings(records, collection_name)
         print(f"Collection {collection_name} created")
 
+    def _hydrate_chunk_metadata(self, records: list[Chunk]) -> list[Chunk]:
+        for chunk_index, record in enumerate(records):
+            if "chunk_index" not in record.__dict__:
+                record.chunk_index = chunk_index
+            if "page_number" not in record.__dict__:
+                record.page_number = None
+            if "chunk_id" not in record.__dict__ or not record.chunk_id:
+                record.chunk_id = DocumentService.build_chunk_id(
+                    record.document_name,
+                    record.chunk_index,
+                    record.page_number,
+                )
+
+        return records
+
     def load_collection(self, collection_name: str) -> None:
         try:
             collection_path = f"{self.storage_path}/{collection_name}.npy"
             records = np.load(collection_path, allow_pickle=True)
-            self.active_collection = records.tolist()
+            self.active_collection = self._hydrate_chunk_metadata(records.tolist())
             print(f"Collection {collection_name} loaded")
         except FileNotFoundError:
             print(f"Collection {collection_name} not found")

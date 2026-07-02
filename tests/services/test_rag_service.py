@@ -86,6 +86,34 @@ class TestRagService:
         expected_result_top_2 = "First chunk\n\nSecond chunk"
         assert result_top_2 == expected_result_top_2
 
+    def test_retrieve_chunks_returns_scored_chunks(self, mocker):
+        mocker.patch.object(
+            RagService,
+            "generate_embeddings",
+            return_value=[1.0, 0.0, 0.0],
+        )
+        chunks = [
+            Chunk(
+                document_name="test_doc.txt",
+                text="First chunk",
+                embedding=[0.2, 0.7, 0.1],
+                chunk_id="test_doc.txt#chunk-0",
+                chunk_index=0,
+            ),
+            Chunk(
+                document_name="test_doc.txt",
+                text="Second chunk",
+                embedding=[0.8, 0.1, 0.1],
+                chunk_id="test_doc.txt#chunk-1",
+                chunk_index=1,
+            ),
+        ]
+
+        result = RagService.retrieve_chunks("test query", chunks, top_k=2)
+
+        assert result == [chunks[1], chunks[0]]
+        assert result[0].similarity == 0.8
+
     def test_similarity_search_does_not_reorder_collection(self, mocker):
         mocker.patch.object(
             RagService,

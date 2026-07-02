@@ -23,34 +23,76 @@ class DocumentService:
 
     @staticmethod
     def read_pdf_document(doc_path: str) -> str:
+        pages = DocumentService.read_pdf_pages(doc_path)
+        if not pages:
+            return ""
+
+        return "\n".join([page_text for _, page_text in pages]) + "\n"
+
+    @staticmethod
+    def read_pdf_pages(doc_path: str) -> list[tuple[int | None, str]]:
         try:
             with fitz.open(doc_path) as doc:
-                text = ""
-                for page in doc:
-                    text += page.get_text() + "\n"
-            return text
+                pages = []
+                for page_index, page in enumerate(doc, start=1):
+                    pages.append((page_index, page.get_text().strip()))
+            return pages
         except FileNotFoundError:
             print(f"PDF file not found: {doc_path}")
-            return ""
+            return []
         except Exception as e:
             print(f"Error reading PDF file: {doc_path}")
             print(e)
-            return ""
+            return []
+
+    @staticmethod
+    def read_document_pages(doc_path: str) -> list[tuple[int | None, str]]:
+        if doc_path.lower().endswith(".pdf"):
+            return DocumentService.read_pdf_pages(doc_path)
+
+        doc_text = DocumentService.read_document(doc_path)
+        if not doc_text:
+            return []
+
+        return [(None, doc_text)]
+
+    @staticmethod
+    def build_chunk_id(
+        doc_path: str,
+        chunk_index: int,
+        page_number: int | None = None,
+    ) -> str:
+        if page_number is None:
+            return f"{doc_path}#chunk-{chunk_index}"
+
+        return f"{doc_path}#page-{page_number}-chunk-{chunk_index}"
 
     @staticmethod
     @track_stats
     def process_document(doc_path: str) -> list[Chunk]:
-        if doc_path.lower().endswith(".pdf"):
-            doc_text = DocumentService.read_pdf_document(doc_path)
-        else:
-            doc_text = DocumentService.read_document(doc_path)
-
         splitter = RagService.get_splitter()
-        text_chunks = splitter.split_text(doc_text)
-
         chunks = []
-        for chunk in text_chunks:
-            emb = RagService.generate_embeddings(chunk)
-            chunks.append(Chunk(doc_path, chunk, emb))
+        chunk_index = 0
+
+        for page_number, page_text in DocumentService.read_document_pages(doc_path):
+            text_chunks = splitter.split_text(page_text)
+
+            for chunk_text in text_chunks:
+                emb = RagService.generate_embeddings(chunk_text)
+                chunks.append(
+                    Chunk(
+                        document_name=doc_path,
+                        text=chunk_text,
+                        embedding=emb,
+                        chunk_id=DocumentService.build_chunk_id(
+                            doc_path,
+                            chunk_index,
+                            page_number,
+                        ),
+                        chunk_index=chunk_index,
+                        page_number=page_number,
+                    )
+                )
+                chunk_index += 1
 
         return chunks

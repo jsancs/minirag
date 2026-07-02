@@ -25,12 +25,11 @@ class RagService:
         return backend.generate_embeddings(src_text, model_name)
 
     @staticmethod
-    @track_stats
-    def similarity_search(
+    def retrieve_chunks(
         query: str,
         collection: list[Chunk],
         top_k: int = 5,
-    ) -> str:
+    ) -> list[Chunk]:
         query_emb = RagService.generate_embeddings(query)
         scored_records = []
         for index, record in enumerate(collection):
@@ -42,6 +41,15 @@ class RagService:
             key=lambda item: item[1].similarity,
             reverse=True,
         )[:top_k]
-        top_records.sort(key=lambda item: item[0])
 
-        return "\n\n".join([record.text for _, record in top_records])
+        return [record for _, record in top_records]
+
+    @staticmethod
+    @track_stats
+    def similarity_search(
+        query: str,
+        collection: list[Chunk],
+        top_k: int = 5,
+    ) -> str:
+        retrieved_chunks = RagService.retrieve_chunks(query, collection, top_k)
+        return "\n\n".join([record.text for record in retrieved_chunks])

@@ -11,6 +11,7 @@ class TestCli:
         assert "/add" in captured.out
         assert "/activate <collection_name>" in captured.out
         assert "/clear" in captured.out
+        assert "/retrieve <query>" in captured.out
         assert "/status" in captured.out
 
     def test_normalize_doc_path_strips_matching_quotes(self):
@@ -50,3 +51,20 @@ class TestCli:
         cli.handle_user_query("   ", "llama3.1:8b")
 
         generate_response.assert_not_called()
+
+    def test_retrieve_without_query_prints_usage(self, capsys):
+        cli.handle_user_query("/retrieve", "llama3.1:8b")
+
+        captured = capsys.readouterr()
+
+        assert "Usage: /retrieve <query>" in captured.out
+
+    def test_retrieve_command_shows_retrieved_chunks(self, mocker):
+        retrieve_chunks = mocker.patch("minirag.cli.retrieve_chunks_for_query")
+        show_retrieved_chunks = mocker.patch("minirag.cli.show_retrieved_chunks")
+        retrieve_chunks.return_value = []
+
+        cli.handle_user_query("/retrieve test question", "llama3.1:8b")
+
+        retrieve_chunks.assert_called_once_with("test question")
+        show_retrieved_chunks.assert_called_once_with([])

@@ -1,6 +1,7 @@
 import argparse
 import os
 import subprocess
+from pathlib import Path
 
 from dotenv import load_dotenv
 from prompt_toolkit.shortcuts import prompt
@@ -11,6 +12,7 @@ from minirag.chat import (
     chat_streaming,
     clear_conversation,
 )
+from minirag.models import Chunk
 from minirag.services.collection_service import CollectionService
 from minirag.services.rag_service import RagService
 from minirag.utils.model_utils import handle_model
@@ -25,6 +27,7 @@ def show_help() -> None:
     print("  /add                         Create a collection from files or folders.")
     print("  /activate <collection_name>  Load a collection for RAG answers.")
     print("  /deactivate                  Unload the active collection.")
+    print("  /retrieve <query>            Show retrieved chunks without asking the model.")
     print("  /list                        Show saved collections.")
     print("  /status                      Show the active collection state.")
     print("  /clear                       Clear conversation history and the terminal.")
@@ -70,6 +73,34 @@ def generate_response(
     add_msg_to_memory(user_query, model_response)
 
 
+def chunks_to_context(chunks: list[Chunk]) -> str:
+    return "\n\n".join([chunk.text for chunk in chunks])
+
+
+def format_chunk_source(chunk: Chunk) -> str:
+    source = Path(chunk.document_name).name
+    metadata = [source, f"chunk {chunk.chunk_index}"]
+
+    if chunk.page_number is not None:
+        metadata.insert(1, f"page {chunk.page_number}")
+
+    return ", ".join(metadata)
+
+
+def show_retrieved_chunks(chunks: list[Chunk]) -> None:
+    if not chunks:
+        print("No chunks retrieved.")
+        return
+
+    for result_index, chunk in enumerate(chunks, start=1):
+        print(f"[{result_index}] {format_chunk_source(chunk)}")
+        print(f"score: {chunk.similarity:.4f}")
+        if chunk.chunk_id:
+            print(f"id: {chunk.chunk_id}")
+        print(chunk.text)
+        print()
+
+
 def get_documents() -> list[str]:
     doc_paths = []
     while True:
@@ -91,6 +122,19 @@ def show_status() -> None:
         print(f"Collection active ({chunk_count} chunks).")
     else:
         print("No collection active.")
+
+
+def retrieve_chunks_for_query(user_query: str) -> list[Chunk]:
+    if not collection_service.active_collection:
+        print("No collection active. Use /activate <collection_name> first.")
+        return []
+
+    retrieval_query = build_retrieval_query(user_query)
+    return RagService.retrieve_chunks(
+        retrieval_query,
+        collection_service.active_collection,
+        top_k=5,
+    )
 
 
 def handle_user_query(user_query: str, model_name: str) -> None:
@@ -123,6 +167,14 @@ def handle_user_query(user_query: str, model_name: str) -> None:
     elif user_query == "/deactivate":
         print("Collection deactivated.")
         collection_service.active_collection = None
+    elif user_query.startswith("/retrieve"):
+        command_parts = user_query.split(maxsplit=1)
+        if len(command_parts) == 1:
+            print("Usage: /retrieve <query>")
+            return
+
+        retrieved_chunks = retrieve_chunks_for_query(command_parts[1])
+        show_retrieved_chunks(retrieved_chunks)
     elif user_query == "/add":
         collection_name = ""
         documents = get_documents()
@@ -140,12 +192,8 @@ def handle_user_query(user_query: str, model_name: str) -> None:
         print("Use /help to see available commands.")
     else:
         if collection_service.active_collection:
-            retrieval_query = build_retrieval_query(user_query)
-            context = RagService.similarity_search(
-                retrieval_query,
-                collection_service.active_collection,
-                top_k=5,
-            )
+            retrieved_chunks = retrieve_chunks_for_query(user_query)
+            context = chunks_to_context(retrieved_chunks)
         else:
             context = None
 

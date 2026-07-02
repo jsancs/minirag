@@ -103,6 +103,22 @@ class TestCollectionService:
         collection_service.load_collection("nonexistent")
         assert collection_service.active_collection is None
 
+    def test_hydrate_chunk_metadata_adds_missing_fields(self, collection_service):
+        old_chunk = Chunk(
+            document_name="test_doc.txt",
+            text="test content",
+            embedding=[1.0, 2.0],
+        )
+        del old_chunk.chunk_id
+        del old_chunk.chunk_index
+        del old_chunk.page_number
+
+        result = collection_service._hydrate_chunk_metadata([old_chunk])
+
+        assert result[0].chunk_id == "test_doc.txt#chunk-0"
+        assert result[0].chunk_index == 0
+        assert result[0].page_number is None
+
     def test_list_collections(self, collection_service, sample_text_files, capsys):
         # Create a few collections first
         with patch.object(
