@@ -8,6 +8,7 @@ class TestCli:
         captured = capsys.readouterr()
 
         assert "MiniRAG commands:" in captured.out
+        assert "--top-k" in captured.out
         assert "/add" in captured.out
         assert "/activate <collection_name>" in captured.out
         assert "/clear" in captured.out
@@ -64,7 +65,14 @@ class TestCli:
         show_retrieved_chunks = mocker.patch("minirag.cli.show_retrieved_chunks")
         retrieve_chunks.return_value = []
 
-        cli.handle_user_query("/retrieve test question", "llama3.1:8b")
+        cli.handle_user_query("/retrieve test question", "llama3.1:8b", top_k=3)
 
-        retrieve_chunks.assert_called_once_with("test question")
+        retrieve_chunks.assert_called_once_with("test question", 3)
         show_retrieved_chunks.assert_called_once_with([])
+
+    def test_parse_arguments_accepts_top_k(self, monkeypatch):
+        monkeypatch.setattr("sys.argv", ["minirag", "--top-k", "3"])
+
+        args = cli.parse_arguments()
+
+        assert args.top_k == 3

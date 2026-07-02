@@ -25,6 +25,21 @@ class RagService:
         return backend.generate_embeddings(src_text, model_name)
 
     @staticmethod
+    def cosine_similarity(
+        left_embedding: list[float],
+        right_embedding: list[float],
+    ) -> float:
+        left_vector = np.array(left_embedding, dtype=float)
+        right_vector = np.array(right_embedding, dtype=float)
+
+        left_norm = np.linalg.norm(left_vector)
+        right_norm = np.linalg.norm(right_vector)
+        if left_norm == 0 or right_norm == 0:
+            return 0.0
+
+        return float(np.dot(left_vector, right_vector) / (left_norm * right_norm))
+
+    @staticmethod
     def retrieve_chunks(
         query: str,
         collection: list[Chunk],
@@ -33,7 +48,7 @@ class RagService:
         query_emb = RagService.generate_embeddings(query)
         scored_records = []
         for index, record in enumerate(collection):
-            record.similarity = np.dot(record.embedding, query_emb)
+            record.similarity = RagService.cosine_similarity(record.embedding, query_emb)
             scored_records.append((index, record))
 
         top_records = sorted(

@@ -19,6 +19,7 @@ A tiny implementation of a RAG system that runs entirely on your computer!
 There are 2 configurable params: <br>
 * `-m --model`: model to use (`llama3.1:8b` by default for Ollama). You can check the full list of available models [here](https://ollama.com/library).
 * `-b --backend`: backend to use (ollama by default). Options: ollama, openai. OpenAI backend requires the optional dependency.
+* `-k --top-k`: number of chunks to retrieve for RAG (`5` by default).
 
 
 ## Usage
@@ -112,4 +113,4 @@ The `evaluation/` folder contains scripts and data used to evaluate the performa
 The supported metrics right now are the following:
 
 ### Similarity search speed
-This system uses the basic `np.dot` function to compute the similarity search between the embeddings. To compute the eval data for this metric execute the following command: `python -m evaluation.eval`, it will generate a `.csv` file with the result benchmark for different collection sizes.
+This system uses cosine similarity to compute the similarity search between the embeddings. To compute the eval data for this metric execute the following command: `python -m evaluation.eval`, it will generate a `.csv` file with the result benchmark for different collection sizes.

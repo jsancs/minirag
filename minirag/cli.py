@@ -20,6 +20,7 @@ from minirag.utils.backend_manager import set_backend
 from minirag.backends import BACKENDS
 
 collection_service = CollectionService()
+DEFAULT_TOP_K = 5
 
 
 def show_help() -> None:
@@ -36,6 +37,9 @@ def show_help() -> None:
     print()
     print("Shortcuts:")
     print("  Ctrl-C                       Stop the current response.")
+    print()
+    print("Options:")
+    print("  --top-k                      Number of chunks to retrieve for RAG.")
     print()
 
 
@@ -124,7 +128,10 @@ def show_status() -> None:
         print("No collection active.")
 
 
-def retrieve_chunks_for_query(user_query: str) -> list[Chunk]:
+def retrieve_chunks_for_query(
+    user_query: str,
+    top_k: int = DEFAULT_TOP_K,
+) -> list[Chunk]:
     if not collection_service.active_collection:
         print("No collection active. Use /activate <collection_name> first.")
         return []
@@ -133,11 +140,15 @@ def retrieve_chunks_for_query(user_query: str) -> list[Chunk]:
     return RagService.retrieve_chunks(
         retrieval_query,
         collection_service.active_collection,
-        top_k=5,
+        top_k=top_k,
     )
 
 
-def handle_user_query(user_query: str, model_name: str) -> None:
+def handle_user_query(
+    user_query: str,
+    model_name: str,
+    top_k: int = DEFAULT_TOP_K,
+) -> None:
     user_query = user_query.strip()
 
     if not user_query:
@@ -173,7 +184,7 @@ def handle_user_query(user_query: str, model_name: str) -> None:
             print("Usage: /retrieve <query>")
             return
 
-        retrieved_chunks = retrieve_chunks_for_query(command_parts[1])
+        retrieved_chunks = retrieve_chunks_for_query(command_parts[1], top_k)
         show_retrieved_chunks(retrieved_chunks)
     elif user_query == "/add":
         collection_name = ""
@@ -192,7 +203,7 @@ def handle_user_query(user_query: str, model_name: str) -> None:
         print("Use /help to see available commands.")
     else:
         if collection_service.active_collection:
-            retrieved_chunks = retrieve_chunks_for_query(user_query)
+            retrieved_chunks = retrieve_chunks_for_query(user_query, top_k)
             context = chunks_to_context(retrieved_chunks)
         else:
             context = None
@@ -200,11 +211,11 @@ def handle_user_query(user_query: str, model_name: str) -> None:
         generate_response(user_query, model_name, context)
 
 
-def chat_cli(model_name: str) -> None:
+def chat_cli(model_name: str, top_k: int = DEFAULT_TOP_K) -> None:
     while True:
         try:
             user_query = get_user_input()
-            handle_user_query(user_query, model_name)
+            handle_user_query(user_query, model_name, top_k)
 
         except KeyboardInterrupt:
             # Ctrl-C to stop the model from responding
@@ -227,19 +238,35 @@ def parse_arguments() -> argparse.Namespace:
         choices=list(BACKENDS.keys()),
         help="Backend to use (ollama, openai).",
     )
+    parser.add_argument(
+        "-k",
+        "--top-k",
+        type=parse_positive_int,
+        default=DEFAULT_TOP_K,
+        help="Number of chunks to retrieve for RAG.",
+    )
     return parser.parse_args()
 
 
-def main():
+def parse_positive_int(value: str) -> int:
+    parsed_value = int(value)
+    if parsed_value < 1:
+        raise argparse.ArgumentTypeError("Value must be greater than 0.")
+
+    return parsed_value
+
+
+def main() -> None:
     load_dotenv()
     args = parse_arguments()
     model_name = args.model
     backend_name = args.backend
+    top_k = args.top_k
 
     set_backend(backend_name)
 
     handle_model(model_name)
-    chat_cli(model_name)
+    chat_cli(model_name, top_k)
 
 
 if __name__ == "__main__":

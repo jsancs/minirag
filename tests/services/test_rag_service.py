@@ -1,3 +1,5 @@
+import pytest
+
 from minirag.services.rag_service import RagService
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -112,7 +114,11 @@ class TestRagService:
         result = RagService.retrieve_chunks("test query", chunks, top_k=2)
 
         assert result == [chunks[1], chunks[0]]
-        assert result[0].similarity == 0.8
+        assert result[0].similarity == pytest.approx(0.9847, rel=0.001)
+
+    def test_cosine_similarity_returns_zero_for_empty_vectors(self):
+        assert RagService.cosine_similarity([], [1.0, 0.0]) == 0.0
+        assert RagService.cosine_similarity([1.0, 0.0], []) == 0.0
 
     def test_similarity_search_does_not_reorder_collection(self, mocker):
         mocker.patch.object(
